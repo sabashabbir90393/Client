@@ -5,6 +5,7 @@ import { io } from "socket.io-client";
 
 const SOCKET_URL = "https://chatting-backened.vercel.app";
 
+
 function App() {
   const [joined, setJoined] = useState(false);
 
