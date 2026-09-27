@@ -11,26 +11,31 @@ function App() {
   const [username, setUsername] = useState("");
   const [room, setRoom] = useState("");
 
-  // Socket ko stable rakhne ke liye
+  const [isConnected, setIsConnected] = useState(false);
+
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Socket connection
     const socketInstance = io(SOCKET_URL);
 
-    // Ref mein current socket save
     socketRef.current = socketInstance;
 
-    socketInstance.on("connect", () => {
+    const handleConnect = () => {
       console.log("Connected to server:", socketInstance.id);
-    });
+      setIsConnected(true);
+    };
 
-    socketInstance.on("disconnect", () => {
+    const handleDisconnect = () => {
       console.log("Disconnected from server");
-    });
+      setIsConnected(false);
+    };
 
-    // Cleanup mein EXACT isi socket ko disconnect karo
+    socketInstance.on("connect", handleConnect);
+    socketInstance.on("disconnect", handleDisconnect);
+
     return () => {
+      socketInstance.off("connect", handleConnect);
+      socketInstance.off("disconnect", handleDisconnect);
       socketInstance.disconnect();
 
       if (socketRef.current === socketInstance) {
@@ -38,6 +43,27 @@ function App() {
       }
     };
   }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const socket = socketRef.current;
+
+    if (!socket || !isConnected) {
+      alert("Socket is not connected. Please try again.");
+      return;
+    }
+
+    if (!username.trim() || !room.trim()) {
+      return;
+    }
+
+    socket.emit("join", room.trim());
+
+    console.log("Joined room:", room.trim());
+
+    setJoined(true);
+  };
 
   const handleLeave = () => {
     const socket = socketRef.current;
@@ -49,33 +75,6 @@ function App() {
     setUsername("");
     setRoom("");
     setJoined(false);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const socket = socketRef.current;
-
-    if (!socket) {
-      alert("Socket is not connected. Please try again.");
-      return;
-    }
-
-    if (!socket.connected) {
-      alert("Connecting to server. Please try again in a moment.");
-      return;
-    }
-
-    if (!username.trim() || !room.trim()) {
-      return;
-    }
-
-    // Room join
-    socket.emit("join", room.trim());
-
-    console.log("Joined room:", room.trim());
-
-    setJoined(true);
   };
 
   return (
@@ -90,6 +89,7 @@ function App() {
             <div className="flex items-center gap-3">
 
               <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center shadow-sm">
+
                 <svg
                   width="23"
                   height="23"
@@ -103,6 +103,7 @@ function App() {
                   <path d="M21 11.5a8.38 8.38 0 0 1-9 8.5 8.5 8.5 0 0 1-4-.98L3 20l1.1-4.7A8.5 8.5 0 1 1 21 11.5Z" />
                   <path d="M8 10s1 3 4 4c.8.4 1.5.5 2 .5" />
                 </svg>
+
               </div>
 
               <div>
@@ -119,12 +120,20 @@ function App() {
 
             {/* Online */}
             <div className="flex items-center gap-2 text-sm text-white/90">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#25D366]"></span>
-              Online
+
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  isConnected
+                    ? "bg-[#25D366]"
+                    : "bg-yellow-300"
+                }`}
+              ></span>
+
+              {isConnected ? "Online" : "Connecting..."}
+
             </div>
 
           </nav>
-
 
           {/* MAIN */}
           <main className="h-[calc(100vh-68px)] overflow-y-auto flex items-center">
@@ -133,13 +142,15 @@ function App() {
 
               <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
 
-
                 {/* LEFT SIDE */}
                 <div className="hidden lg:block">
 
                   <div className="inline-flex items-center gap-2 bg-[#d9fdd3] text-[#075E54] px-4 py-2 rounded-full text-xs font-semibold mb-5">
+
                     <span className="w-2 h-2 rounded-full bg-[#25D366]"></span>
+
                     Real-time chat
+
                   </div>
 
                   <h2 className="text-5xl xl:text-6xl font-bold leading-[1.08] tracking-tight text-[#111b21]">
@@ -158,10 +169,11 @@ function App() {
                   </h2>
 
                   <p className="mt-5 text-lg text-[#54656f] leading-relaxed max-w-lg">
+
                     Join a chat room and start talking instantly.
                     Simple, fast and real-time communication.
-                  </p>
 
+                  </p>
 
                   {/* Features */}
                   <div className="flex gap-8 mt-8">
@@ -174,6 +186,7 @@ function App() {
                       </div>
 
                       <div>
+
                         <p className="text-sm font-semibold">
                           Live Chat
                         </p>
@@ -181,10 +194,10 @@ function App() {
                         <p className="text-[11px] text-[#667781]">
                           Instant messages
                         </p>
+
                       </div>
 
                     </div>
-
 
                     {/* Groups */}
                     <div className="flex items-center gap-2.5">
@@ -194,6 +207,7 @@ function App() {
                       </div>
 
                       <div>
+
                         <p className="text-sm font-semibold">
                           Groups
                         </p>
@@ -201,10 +215,10 @@ function App() {
                         <p className="text-[11px] text-[#667781]">
                           Join any room
                         </p>
+
                       </div>
 
                     </div>
-
 
                     {/* Fast */}
                     <div className="flex items-center gap-2.5">
@@ -214,6 +228,7 @@ function App() {
                       </div>
 
                       <div>
+
                         <p className="text-sm font-semibold">
                           Fast
                         </p>
@@ -221,6 +236,7 @@ function App() {
                         <p className="text-[11px] text-[#667781]">
                           Real-time
                         </p>
+
                       </div>
 
                     </div>
@@ -228,7 +244,6 @@ function App() {
                   </div>
 
                 </div>
-
 
                 {/* RIGHT JOIN CARD */}
                 <div className="flex justify-center lg:justify-end">
@@ -257,7 +272,6 @@ function App() {
 
                     </div>
 
-
                     {/* Card */}
                     <div className="bg-white rounded-2xl shadow-xl border border-black/[0.04] p-6 sm:p-8">
 
@@ -276,7 +290,6 @@ function App() {
                         </p>
 
                       </div>
-
 
                       <form
                         className="space-y-5"
@@ -311,7 +324,6 @@ function App() {
 
                         </div>
 
-
                         {/* Room */}
                         <div>
 
@@ -340,7 +352,6 @@ function App() {
 
                         </div>
 
-
                         {/* Join Button */}
                         <button
                           type="submit"
@@ -351,7 +362,6 @@ function App() {
                         </button>
 
                       </form>
-
 
                       {/* Bottom */}
                       <div className="flex items-center justify-center gap-2 mt-6 text-xs text-[#8696a0]">
@@ -381,7 +391,7 @@ function App() {
         <ChatRoom
           username={username}
           room={room}
-          socket={socketRef.current}
+          socketRef={socketRef}
           onLeave={handleLeave}
         />
       )}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-function ChatRoom({ username, room, socket, onLeave }) {
+function ChatRoom({ username, room, socketRef, onLeave }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -20,6 +20,8 @@ function ChatRoom({ username, room, socket, onLeave }) {
 
   // Receive messages
   useEffect(() => {
+    const socket = socketRef.current;
+
     if (!socket) return;
 
     const handleMessage = (data) => {
@@ -39,7 +41,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
     return () => {
       socket.off("message", handleMessage);
     };
-  }, [socket]);
+  }, [socketRef]);
 
   // Scroll to latest message
   useEffect(() => {
@@ -49,15 +51,25 @@ function ChatRoom({ username, room, socket, onLeave }) {
   }, [messages]);
 
   // Time
+
   const formatTime = (time) => {
+  if (!time) return "";
+
+  return new Date(time).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+  /* const formatTime = (time) => {
     return new Date(time || Date.now()).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
+  }; */
 
   // Send text
   const handleSend = () => {
+    const socket = socketRef.current;
     const trimmedMessage = message.trim();
 
     if (!trimmedMessage || !socket) return;
@@ -98,6 +110,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
 
   // File selected
   const handleFileChange = (e) => {
+    const socket = socketRef.current;
     const file = e.target.files?.[0];
 
     if (!file || !socket) return;
@@ -150,6 +163,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
       msg.fileName?.toLowerCase().includes(search)
     );
   });
+
   return (
     <div className="fixed inset-0 w-full h-screen bg-[#efeae2] overflow-hidden">
 
@@ -237,6 +251,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
               >
                 🚪 Leave room
               </button>
+
             </div>
           )}
         </header>
@@ -276,6 +291,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
                   ×
                 </button>
               )}
+
             </div>
           </div>
         )}
@@ -291,7 +307,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
           }}
         >
           {filteredMessages.length === 0 ? (
-           <div className="h-full " />
+            <div className="h-full " />
           ) : (
             <div className="w-full max-w-4xl mx-auto space-y-2">
 
@@ -312,6 +328,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
                           : "bg-white rounded-tl-none"
                       }`}
                     >
+
                       {!isMine && (
                         <p className="text-[12px] font-semibold text-[#075E54] mb-1">
                           {msg.username}
@@ -335,6 +352,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
                         <div className="flex items-center gap-3 bg-black/[0.04] rounded-lg p-3 min-w-[220px]">
 
                           <div className="w-10 h-10 rounded-lg bg-[#075E54] text-white flex items-center justify-center shrink-0">
+
                             <svg
                               width="21"
                               height="21"
@@ -346,9 +364,11 @@ function ChatRoom({ username, room, socket, onLeave }) {
                               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                               <path d="M14 2v6h6" />
                             </svg>
+
                           </div>
 
                           <div className="min-w-0 flex-1">
+
                             <p className="text-sm font-medium truncate">
                               {msg.fileName || "Attachment"}
                             </p>
@@ -361,7 +381,9 @@ function ChatRoom({ username, room, socket, onLeave }) {
                             >
                               Open attachment
                             </button>
+
                           </div>
+
                         </div>
                       )}
 
@@ -384,16 +406,20 @@ function ChatRoom({ username, room, socket, onLeave }) {
                             ✓✓
                           </span>
                         )}
+
                       </div>
+
                     </div>
                   </div>
                 );
               })}
 
               <div ref={messagesEndRef} />
+
             </div>
           )}
         </main>
+
         {/* EMOJI PICKER */}
         {showEmoji && (
           <div className="shrink-0 bg-[#f0f2f5] border-t border-gray-200 px-3 py-3">
@@ -521,6 +547,7 @@ function ChatRoom({ username, room, socket, onLeave }) {
           <p className="text-center text-[10px] text-[#8696a0] mt-1.5">
             Real-time messaging with Socket.IO
           </p>
+
         </footer>
 
       </div>
