@@ -3,7 +3,7 @@ import ChatRoom from "./components/ChatRoom";
 import "./App.css";
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:5050";
+const SOCKET_URL = "https://chatting-backened.vercel.app";
 
 function App() {
   const [joined, setJoined] = useState(false);
