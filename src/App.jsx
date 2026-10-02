@@ -436,7 +436,13 @@ function App() {
 
   // Socket connection
   useEffect(() => {
-    const socketInstance = io(SOCKET_URL);
+    /* const socketInstance = io(SOCKET_URL); */
+    const socketInstance = io(SOCKET_URL, {
+  path: "/api/socket-io/socket.io",
+  transports: ["websocket"],
+  reconnection: true,
+
+});
 
     socketRef.current = socketInstance;
 
@@ -479,7 +485,8 @@ function App() {
       return;
     }
 
-    socket.emit("join", room.trim());
+   /*  socket.emit("join", room.trim()); */
+   socket.emit("join", room.trim(), username.trim());
 
     console.log("Joined room:", room.trim());
 
